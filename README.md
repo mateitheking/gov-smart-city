@@ -70,17 +70,6 @@ Create a Google Sheet with a tab named **`Requests`** and these columns:
 | status_updated_at | Timestamp |
 
 ---
-
-## Repo Structure
-/
-bot/ # Telegram bot
-web/ # Simple web form (optional)
-scripts/ # Google Apps Script / utilities
-docs/ # Short docs, screenshots
-.env.example
-README.md
-
----
 ```bash
 TELEGRAM_BOT_TOKEN=
 GOOGLE_SHEET_ID=
