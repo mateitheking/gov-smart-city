@@ -69,11 +69,9 @@ Create a Google Sheet with a tab named **`Requests`** and these columns:
 | public_comment | Message visible to the citizen |
 | status_updated_at | Timestamp |
 
-**Tip:** Use dropdown lists for `status/category/priority` and conditional formatting for urgency.
-
 ---
 
-## Repo Structure (Suggested)
+## Repo Structure
 /
 bot/ # Telegram bot
 web/ # Simple web form (optional)
