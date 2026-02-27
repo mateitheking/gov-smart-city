@@ -1,0 +1,19 @@
+{
+  "name": "gov-smart-city-main",
+  "version": "1.0.0",
+  "description": "Telegram bot + Site + Webview app for Android/iOS (Kazakhstan Government smart city system)",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "dev:bot": "nodemon bot/src/index.js",
+    "start:bot": "node bot/src/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "dotenv": "^17.3.1",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
