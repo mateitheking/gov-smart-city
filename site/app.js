@@ -570,6 +570,26 @@ function getWebAppConfig() {
   return { url, secret };
 }
 
+function askAndSaveWebAppConfig() {
+  const current = getWebAppConfig();
+  const url = window.prompt(
+    "Вставьте URL Apps Script WebApp (/exec):",
+    current.url || ""
+  );
+  if (!url || !String(url).trim()) return null;
+
+  const secret = window.prompt(
+    "Вставьте shared secret (SHARED_SECRET):",
+    current.secret || ""
+  );
+  if (!secret || !String(secret).trim()) return null;
+
+  window.localStorage.setItem("aq_webapp_url", String(url).trim());
+  window.localStorage.setItem("aq_webapp_secret", String(secret).trim());
+
+  return { url: String(url).trim(), secret: String(secret).trim() };
+}
+
 function normalizeCategoryForSite(description) {
   const text = String(description || "").toLowerCase();
   const has = (...words) => words.some((w) => text.includes(w));
@@ -1374,8 +1394,25 @@ function initDemoForm() {
       const message = err instanceof Error ? err.message : String(err);
 
       if (message === "MISSING_WEBAPP_CONFIG") {
-        alert("Ошибка отправки: не настроен Apps Script WebApp. Добавьте в localStorage ключи aq_webapp_url и aq_webapp_secret (или APPS_SCRIPT_WEBAPP_URL / APPS_SCRIPT_SHARED_SECRET).");
-        return;
+        const configured = askAndSaveWebAppConfig();
+        if (!configured) {
+          alert("Отправка отменена: не заполнены URL/secret для Apps Script.");
+          return;
+        }
+
+        try {
+          const out = await sendRequestToAppsScript(payload);
+          requestItem.request_id = out.request_id || "";
+          requests.unshift(requestItem);
+          saveRequests(requests);
+          alert(`✅ Отправлено в Google Sheets. ID: ${out.request_id || "(без ID)"}`);
+          resetDraft();
+          return;
+        } catch (retryErr) {
+          const retryMessage = retryErr instanceof Error ? retryErr.message : String(retryErr);
+          alert(`Ошибка отправки после настройки: ${retryMessage}`);
+          return;
+        }
       }
 
       alert(`Ошибка отправки: ${message}`);
