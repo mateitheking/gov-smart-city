@@ -183,7 +183,7 @@
 // // ----------------- state -----------------
 // const state = {
 //   category: "Освещение",
-//   city: "Петропавловск",
+//   city: "",
 //   desc: "",
 //   lat: null,
 //   lng: null,
@@ -371,7 +371,7 @@
 //   if (resetBtn) {
 //     resetBtn.addEventListener("click", () => {
 //       state.category = "Освещение";
-//       state.city = "Петропавловск";
+//       state.city = "";
 //       state.desc = "";
 //       state.lat = null;
 //       state.lng = null;
@@ -552,6 +552,108 @@ function safeJsonParse(value, fallback) {
   }
 }
 
+function readMetaContent(name) {
+  const node = document.querySelector(`meta[name="${name}"]`);
+  return node ? String(node.getAttribute("content") || "").trim() : "";
+}
+
+function getWebAppConfig() {
+  const url = (
+    window.AQ_WEBAPP_URL ||
+    readMetaContent("apps-script-webapp-url") ||
+    ""
+  ).trim();
+
+  const secret = (
+    window.AQ_WEBAPP_SECRET ||
+    readMetaContent("apps-script-shared-secret") ||
+    ""
+  ).trim();
+
+  return { url, secret };
+}
+
+function promptWebAppConfig() {
+  const current = getWebAppConfig();
+  const url = window.prompt("Вставьте URL Apps Script WebApp (/exec):", current.url || "");
+  if (!url || !String(url).trim()) return null;
+
+  const secret = window.prompt("Вставьте SHARED_SECRET:", current.secret || "");
+  if (!secret || !String(secret).trim()) return null;
+
+  return { url: String(url).trim(), secret: String(secret).trim() };
+}
+
+function normalizeCategoryForSite(description) {
+  const text = String(description || "").toLowerCase();
+  const has = (...words) => words.some((w) => text.includes(w));
+
+  if (has("яма", "выбои", "асфальт", "дорог", "трещин", "колея", "провал", "бордюр", "тротуар")) {
+    return "Roads";
+  }
+  if (has("фонарь", "свет", "освещ", "ламп", "не горит", "мигает")) {
+    return "Lighting";
+  }
+  if (has("мусор", "контейнер", "свалк", "пакет", "грязь")) {
+    return "Trash";
+  }
+  if (has("вода", "канализа", "теч", "прорв", "тепло", "отоплен", "газ", "труба")) {
+    return "Utilities";
+  }
+  if (has("искрит", "огол", "опасно", "обрыв", "авар", "открыт", "люк", "пожар", "взрыв")) {
+    return "Safety";
+  }
+  return "Unsorted";
+}
+
+function normalizePriorityForSite(description) {
+  const text = String(description || "").toLowerCase();
+  const has = (...words) => words.some((w) => text.includes(w));
+
+  if (
+    has("искрит", "огол", "опасно", "обрыв", "авар", "открыт", "люк", "пожар", "взрыв") ||
+    has("срочно", "утечка газа", "затопление")
+  ) {
+    return "High";
+  }
+
+  if (
+    text.includes("низкий приоритет") ||
+    text.includes("несрочно") ||
+    text.includes("не срочно") ||
+    has("граффити", "наклейк", "листовк", "космет")
+  ) {
+    return "Low";
+  }
+
+  return "Medium";
+}
+
+async function sendRequestToAppsScript(payload, configOverride = null) {
+  const { url, secret } = configOverride || getWebAppConfig();
+
+  if (!url || !secret) {
+    throw new Error("MISSING_WEBAPP_CONFIG");
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify({
+      ...payload,
+      secret
+    })
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.ok) {
+    throw new Error(data.error || `HTTP_${res.status}`);
+  }
+  return data;
+}
+
 // ----------------- auth storage -----------------
 function getUsers() {
   const raw = localStorage.getItem(USERS_KEY);
@@ -585,6 +687,32 @@ function normalizeSessionUser(user) {
     createdAt: user.createdAt || new Date().toISOString(),
   };
 }
+
+// ----------------- guest (no login required) -----------------
+const GUEST_USER_KEY = "aq_guest_user";
+
+function getOrCreateGuestUser() {
+  const raw = localStorage.getItem(GUEST_USER_KEY);
+  if (raw) {
+    const parsed = safeJsonParse(raw, null);
+    if (parsed && typeof parsed === "object") {
+      const normalized = normalizeSessionUser(parsed);
+      if (normalized) return normalized;
+    }
+  }
+
+  const id = Date.now();
+  const guest = {
+    id,
+    username: `Гость-${String(id).slice(-4)}`,
+    email: "",
+    createdAt: new Date().toISOString(),
+  };
+
+  localStorage.setItem(GUEST_USER_KEY, JSON.stringify(guest));
+  return guest;
+}
+
 
 function getCurrentUser() {
   const rawCurrent = localStorage.getItem(CURRENT_USER_KEY);
@@ -869,7 +997,6 @@ function bindBotLinks() {
     "openBotCta",
     "openBotFooter",
     "openBotMobile",
-    "openBotMap",
     "openBotInline"
   ];
 
@@ -960,7 +1087,7 @@ function renderQR() {
 // ----------------- request form state -----------------
 const state = {
   category: "Освещение",
-  city: "Петропавловск",
+  city: "",
   desc: "",
   lat: null,
   lng: null,
@@ -1096,10 +1223,9 @@ function initDemoForm() {
   const photoPreview = el("photoPreview");
   const resetBtn = el("resetDraft");
   const useMyLocationBtn = el("useMyLocation");
-
   function resetDraft() {
     state.category = "Освещение";
-    state.city = "Петропавловск";
+    state.city = "";
     state.desc = "";
     state.lat = null;
     state.lng = null;
@@ -1213,14 +1339,16 @@ function initDemoForm() {
     resetBtn.addEventListener("click", resetDraft);
   }
 
-  requestForm.addEventListener("submit", (e) => {
+  requestForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    if (!isLoggedIn()) {
-      alert("Сначала войдите в аккаунт.");
-      window.location.href = "login.html";
-      return;
-    }
+    // ✅ Login is optional: auto-create guest user if needed
+let currentUser = getCurrentUser();
+if (!currentUser) {
+  const guest = getOrCreateGuestUser();
+  setCurrentUser(guest);                 // создаём “гостевую сессию” в этом браузере
+  currentUser = getCurrentUser() || guest;
+}
 
     if (!state.desc) {
       alert("Опишите проблему.");
@@ -1228,33 +1356,86 @@ function initDemoForm() {
       return;
     }
 
-    const currentUser = getCurrentUser();
+    const hasGeo = Number.isFinite(state.lat) && Number.isFinite(state.lng);
+    const hasAddress = !!state.city;
+    if (!hasGeo && !hasAddress) {
+      alert("Нужно указать место: адрес или точку на карте.");
+      if (cityInput) cityInput.focus();
+      return;
+    }
+
     const requests = getRequests();
+
+    const classificationCategory = normalizeCategoryForSite(state.desc);
+    const classificationPriority = normalizePriorityForSite(state.desc);
+
+    const chatId = String(currentUser?.telegramChatId || currentUser?.id || "");
+
+    const payload = {
+      chat_id: chatId,
+      telegram_user_id: currentUser?.id || "",
+      user_name: currentUser?.username || "Пользователь",
+      description: state.desc,
+      lat: hasGeo ? state.lat : undefined,
+      lng: hasGeo ? state.lng : undefined,
+      address_text: state.city || "",
+      photo_file_id: "",
+      photo_url: state.photoDataUrl || "",
+      category: classificationCategory,
+      priority: classificationPriority,
+      confidence: "",
+      tags: "web;site",
+    };
 
     const requestItem = {
       id: Date.now(),
       authorId: currentUser?.id ?? null,
       authorUsername: currentUser?.username || "Пользователь",
-      category: state.category,
+      category: classificationCategory,
       city: state.city,
       description: state.desc,
       lat: state.lat,
       lng: state.lng,
       photoDataUrl: state.photoDataUrl,
-      status: "Новое",
+      status: "New",
       createdAt: new Date().toISOString(),
     };
 
-    requests.unshift(requestItem);
-    saveRequests(requests);
+    try {
+      const out = await sendRequestToAppsScript(payload);
 
-    alert("Обращение сохранено.");
+      requestItem.request_id = out.request_id || "";
 
-    // при желании можно сразу открыть бота с текстом
-    // const draftText = buildDraftText();
-    // goToTelegramWithDraft(draftText);
+      const id = out.request_id || "(без ID)";
+      alert(`✅ Успешно отправлено! Ваш ID: ${id}`);
 
-    resetDraft();
+      resetDraft();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+
+      if (message === "MISSING_WEBAPP_CONFIG") {
+        const runtimeConfig = promptWebAppConfig();
+        if (!runtimeConfig) {
+          alert("Отправка отменена: не введены URL/SHARED_SECRET.");
+          return;
+        }
+
+        try {
+          const out = await sendRequestToAppsScript(payload, runtimeConfig);
+          requestItem.request_id = out.request_id || "";
+          const id = out.request_id || "(без ID)";
+          alert(`✅ Успешно отправлено! Ваш ID: ${id}`);
+          resetDraft();
+          return;
+        } catch (retryErr) {
+          const retryMessage = retryErr instanceof Error ? retryErr.message : String(retryErr);
+          alert(`Ошибка отправки после ввода URL/секрета: ${retryMessage}`);
+          return;
+        }
+      }
+
+      alert(`Ошибка отправки: ${message}`);
+    }
   });
 
   syncOutput();
