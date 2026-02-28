@@ -573,6 +573,17 @@ function getWebAppConfig() {
   return { url, secret };
 }
 
+function promptWebAppConfig() {
+  const current = getWebAppConfig();
+  const url = window.prompt("Вставьте URL Apps Script WebApp (/exec):", current.url || "");
+  if (!url || !String(url).trim()) return null;
+
+  const secret = window.prompt("Вставьте SHARED_SECRET:", current.secret || "");
+  if (!secret || !String(secret).trim()) return null;
+
+  return { url: String(url).trim(), secret: String(secret).trim() };
+}
+
 function normalizeCategoryForSite(description) {
   const text = String(description || "").toLowerCase();
   const has = (...words) => words.some((w) => text.includes(w));
@@ -618,8 +629,8 @@ function normalizePriorityForSite(description) {
   return "Medium";
 }
 
-async function sendRequestToAppsScript(payload) {
-  const { url, secret } = getWebAppConfig();
+async function sendRequestToAppsScript(payload, configOverride = null) {
+  const { url, secret } = configOverride || getWebAppConfig();
 
   if (!url || !secret) {
     throw new Error("MISSING_WEBAPP_CONFIG");
@@ -1374,8 +1385,23 @@ function initDemoForm() {
       const message = err instanceof Error ? err.message : String(err);
 
       if (message === "MISSING_WEBAPP_CONFIG") {
-        alert("Ошибка отправки: не настроен Apps Script WebApp. Укажите URL и SHARED_SECRET в index.html (meta: apps-script-webapp-url / apps-script-shared-secret) или через window.AQ_WEBAPP_URL / window.AQ_WEBAPP_SECRET.");
-        return;
+        const runtimeConfig = promptWebAppConfig();
+        if (!runtimeConfig) {
+          alert("Отправка отменена: не введены URL/SHARED_SECRET.");
+          return;
+        }
+
+        try {
+          const out = await sendRequestToAppsScript(payload, runtimeConfig);
+          requestItem.request_id = out.request_id || "";
+          alert(`✅ Отправлено в Google Sheets. ID: ${out.request_id || "(без ID)"}`);
+          resetDraft();
+          return;
+        } catch (retryErr) {
+          const retryMessage = retryErr instanceof Error ? retryErr.message : String(retryErr);
+          alert(`Ошибка отправки после ввода URL/секрета: ${retryMessage}`);
+          return;
+        }
       }
 
       alert(`Ошибка отправки: ${message}`);
