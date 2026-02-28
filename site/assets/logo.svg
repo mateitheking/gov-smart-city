@@ -1,0 +1,11 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aqyldy Qala logo">
+  <g stroke="#1F64B5" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M88 150V106L118 88V150" />
+    <path d="M118 150V66L172 96V150" />
+    <path d="M172 150V104L206 126V150" />
+    <path d="M70 170C86 146 110 136 132 136C154 136 180 146 198 166" />
+    <path d="M56 178C86 166 120 164 154 166C184 168 206 174 220 180" />
+    <path d="M84 182C100 186 116 196 130 208" />
+    <path d="M142 208C158 198 176 190 196 186" />
+  </g>
+</svg>

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Aqyldy Qala — городские обращения</title>
   <meta name="description" content="Сайт-проводник к Telegram-боту Aqyldy Qala + форма обращения." />
+  <meta name="apps-script-webapp-url" content="" />
+  <meta name="apps-script-shared-secret" content="" />
   <link rel="stylesheet" href="styles.css" />
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -16,7 +18,7 @@
 <header class="siteHeader">
   <div class="container headerInner">
     <a class="brand" href="index.html" aria-label="На главную">
-      <img class="brandLogo" src="assets/logo.png" alt="Aqyldy Qala" />
+      <img class="brandLogo" src="assets/logo.svg" alt="Aqyldy Qala" />
       <div class="brandText">
         <div class="brandTitle">Aqyldy Qala</div>
         <div class="brandSub">Городские обращения в 1 минуту</div>
@@ -95,11 +97,6 @@
 
         <div class="islandGrid">
           <div class="exampleCard">
-            <div class="exampleTop">
-              <div class="chip gray">Форма обращения</div>
-              <div class="chip success"><i></i>&nbsp;Статус: черновик</div>
-            </div>
-
             <form id="requestForm">
               <div class="photoUpload">
                 <label class="photoDrop" for="photoInput">
@@ -116,8 +113,8 @@
                 
 
                 <div class="field">
-                  <label>Город / район ,улица ,дом</label>
-                  <input id="cityInput" type="text" value="Петропавловск" />
+                  <label>Введите адрес (город/посёлок, улица, дом). Можно добавить ориентир:</label>
+                  <input id="cityInput" type="text" placeholder="Например: город, улица, дом, ориентир" />
                 </div>
 
                 <div class="field fieldFull">
@@ -141,41 +138,24 @@
                 </div>
               </div>
 
-              <div class="rows" style="margin-top:10px">
-                
-                <div class="row"><span>Локация</span><b id="outCity">Петропавловск</b></div>
-                <div class="row"><span>Координаты</span><b id="outCoords">—</b></div>
-              </div>
-
               <div class="ctaRow" style="margin-top:12px">
                 <button class="btn primary" type="submit">Отправить</button>
                 <button class="btn ghost" id="resetDraft" type="button">Сбросить</button>
               </div>
 
-              <div class="small muted" style="margin-top:10px">
-                Для отправки в Telegram используйте кнопки «Открыть бота».
-              </div>
             </form>
           </div>
 
           <div class="mapCard">
-            <div class="mapHead">
-              <div>
-                <div class="mapTitle">Карта выбора точки (OSM)</div>
-                <div class="mapSub">Кликните по карте — маркер поставится на место проблемы.</div>
-              </div>
-
-              <a class="btn smallBtn" id="openBotMap" href="#" rel="noopener">Открыть бота</a>
-            </div>
-
             <div class="mapWrap">
               <div id="leafletMap" class="leafletMap" aria-label="Карта выбора точки"></div>
             </div>
 
             <div class="mapNote">
-              В Telegram потом можно отправить геолокацию точкой — и обращение будет привязано к месту.
+              В Telegram можно отправить геолокацию точкой — и обращение будет привязано к месту.
             </div>
           </div>
+
         </div>
 
         <div class="islandFooter">
