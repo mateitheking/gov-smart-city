@@ -940,7 +940,6 @@ function bindBotLinks() {
     "openBotCta",
     "openBotFooter",
     "openBotMobile",
-    "openBotMap",
     "openBotInline"
   ];
 
@@ -1162,18 +1161,11 @@ function initDemoForm() {
 
   const categorySelect = el("categorySelect");
   const cityInput = el("cityInput");
-  const chatIdInput = el("chatIdInput");
   const descInput = el("descInput");
   const photoInput = el("photoInput");
   const photoPreview = el("photoPreview");
   const resetBtn = el("resetDraft");
   const useMyLocationBtn = el("useMyLocation");
-  const submitStatus = el("submitStatus");
-
-  if (submitStatus && (!SITE_WEBAPP_URL || !SITE_SHARED_SECRET)) {
-    submitStatus.textContent = "⚠️ Для отправки заполните localStorage: aq_webapp_url и aq_webapp_secret.";
-  }
-
   function resetDraft() {
     state.category = "Освещение";
     state.city = "Петропавловск";
@@ -1218,11 +1210,6 @@ function initDemoForm() {
     descInput.addEventListener("input", () => {
       state.desc = descInput.value.trim();
     });
-  }
-
-  if (chatIdInput && isLoggedIn()) {
-    const currentUser = getCurrentUser();
-    chatIdInput.value = String(currentUser?.telegramChatId || currentUser?.id || "");
   }
 
   if (photoInput && photoPreview) {
@@ -1304,11 +1291,6 @@ function initDemoForm() {
       return;
     }
 
-    if (submitStatus) {
-      submitStatus.textContent = "";
-      submitStatus.style.color = "";
-    }
-
     if (!state.desc) {
       alert("Опишите проблему.");
       if (descInput) descInput.focus();
@@ -1329,15 +1311,7 @@ function initDemoForm() {
     const classificationCategory = normalizeCategoryForSite(state.desc);
     const classificationPriority = normalizePriorityForSite(state.desc);
 
-    const chatIdFromInput = chatIdInput ? chatIdInput.value.trim() : "";
-    const fallbackChatId = currentUser?.telegramChatId || currentUser?.id;
-    const chatId = chatIdFromInput || String(fallbackChatId || "");
-
-    if (!chatId) {
-      alert("Укажите Telegram chat_id для отправки в Google Sheets.");
-      if (chatIdInput) chatIdInput.focus();
-      return;
-    }
+    const chatId = String(currentUser?.telegramChatId || currentUser?.id || "");
 
     const payload = {
       chat_id: chatId,
@@ -1376,23 +1350,13 @@ function initDemoForm() {
       requests.unshift(requestItem);
       saveRequests(requests);
 
-      if (submitStatus) {
-        submitStatus.textContent = `✅ Отправлено в Google Sheets. ID: ${out.request_id || "(без ID)"}`;
-        submitStatus.style.color = "#137333";
-      } else {
-        alert(`✅ Отправлено в Google Sheets. ID: ${out.request_id || "(без ID)"}`);
-      }
+      alert(`✅ Отправлено в Google Sheets. ID: ${out.request_id || "(без ID)"}`);
 
       resetDraft();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
 
-      if (submitStatus) {
-        submitStatus.textContent = `❌ Ошибка отправки: ${message}. Проверьте aq_webapp_url и aq_webapp_secret в localStorage.`;
-        submitStatus.style.color = "#b3261e";
-      } else {
-        alert(`Ошибка отправки: ${message}`);
-      }
+      alert(`Ошибка отправки: ${message}`);
     }
   });
 

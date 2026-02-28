@@ -95,11 +95,6 @@
 
         <div class="islandGrid">
           <div class="exampleCard">
-            <div class="exampleTop">
-              <div class="chip gray">Форма обращения</div>
-              <div class="chip success"><i></i>&nbsp;Статус: черновик</div>
-            </div>
-
             <form id="requestForm">
               <div class="photoUpload">
                 <label class="photoDrop" for="photoInput">
@@ -118,11 +113,6 @@
                 <div class="field">
                   <label>Город / район ,улица ,дом</label>
                   <input id="cityInput" type="text" value="Петропавловск" />
-                </div>
-
-                <div class="field">
-                  <label>Telegram chat_id (для уведомлений)</label>
-                  <input id="chatIdInput" type="text" placeholder="Например: 123456789" />
                 </div>
 
                 <div class="field fieldFull">
@@ -157,28 +147,9 @@
                 <button class="btn ghost" id="resetDraft" type="button">Сбросить</button>
               </div>
 
-              <div id="submitStatus" class="small muted" style="margin-top:10px"></div>
             </form>
           </div>
 
-          <div class="mapCard">
-            <div class="mapHead">
-              <div>
-                <div class="mapTitle">Карта выбора точки (OSM)</div>
-                <div class="mapSub">Кликните по карте — маркер поставится на место проблемы.</div>
-              </div>
-
-              <a class="btn smallBtn" id="openBotMap" href="#" rel="noopener">Открыть бота</a>
-            </div>
-
-            <div class="mapWrap">
-              <div id="leafletMap" class="leafletMap" aria-label="Карта выбора точки"></div>
-            </div>
-
-            <div class="mapNote">
-              В Telegram потом можно отправить геолокацию точкой — и обращение будет привязано к месту.
-            </div>
-          </div>
         </div>
 
         <div class="islandFooter">
