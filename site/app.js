@@ -552,8 +552,23 @@ function safeJsonParse(value, fallback) {
   }
 }
 
-const SITE_WEBAPP_URL = (window.localStorage.getItem("aq_webapp_url") || "").trim();
-const SITE_SHARED_SECRET = (window.localStorage.getItem("aq_webapp_secret") || "").trim();
+function getWebAppConfig() {
+  const url = (
+    window.localStorage.getItem("aq_webapp_url") ||
+    window.localStorage.getItem("APPS_SCRIPT_WEBAPP_URL") ||
+    window.AQ_WEBAPP_URL ||
+    ""
+  ).trim();
+
+  const secret = (
+    window.localStorage.getItem("aq_webapp_secret") ||
+    window.localStorage.getItem("APPS_SCRIPT_SHARED_SECRET") ||
+    window.AQ_WEBAPP_SECRET ||
+    ""
+  ).trim();
+
+  return { url, secret };
+}
 
 function normalizeCategoryForSite(description) {
   const text = String(description || "").toLowerCase();
@@ -601,18 +616,20 @@ function normalizePriorityForSite(description) {
 }
 
 async function sendRequestToAppsScript(payload) {
-  if (!SITE_WEBAPP_URL || !SITE_SHARED_SECRET) {
+  const { url, secret } = getWebAppConfig();
+
+  if (!url || !secret) {
     throw new Error("MISSING_WEBAPP_CONFIG");
   }
 
-  const res = await fetch(SITE_WEBAPP_URL, {
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain;charset=utf-8"
     },
     body: JSON.stringify({
       ...payload,
-      secret: SITE_SHARED_SECRET
+      secret
     })
   });
 
@@ -1355,6 +1372,11 @@ function initDemoForm() {
       resetDraft();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+
+      if (message === "MISSING_WEBAPP_CONFIG") {
+        alert("Ошибка отправки: не настроен Apps Script WebApp. Добавьте в localStorage ключи aq_webapp_url и aq_webapp_secret (или APPS_SCRIPT_WEBAPP_URL / APPS_SCRIPT_SHARED_SECRET).");
+        return;
+      }
 
       alert(`Ошибка отправки: ${message}`);
     }
