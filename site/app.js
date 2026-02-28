@@ -183,7 +183,7 @@
 // // ----------------- state -----------------
 // const state = {
 //   category: "Освещение",
-//   city: "Петропавловск",
+//   city: "",
 //   desc: "",
 //   lat: null,
 //   lng: null,
@@ -371,7 +371,7 @@
 //   if (resetBtn) {
 //     resetBtn.addEventListener("click", () => {
 //       state.category = "Освещение";
-//       state.city = "Петропавловск";
+//       state.city = "";
 //       state.desc = "";
 //       state.lat = null;
 //       state.lng = null;
@@ -1030,7 +1030,7 @@ function renderQR() {
 // ----------------- request form state -----------------
 const state = {
   category: "Освещение",
-  city: "Петропавловск",
+  city: "",
   desc: "",
   lat: null,
   lng: null,
@@ -1168,7 +1168,7 @@ function initDemoForm() {
   const useMyLocationBtn = el("useMyLocation");
   function resetDraft() {
     state.category = "Освещение";
-    state.city = "Петропавловск";
+    state.city = "";
     state.desc = "";
     state.lat = null;
     state.lng = null;
