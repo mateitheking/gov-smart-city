@@ -73,5 +73,5 @@ Create a Google Sheet with a tab named **`Requests`** and these columns:
 ```bash
 TELEGRAM_BOT_TOKEN=
 GOOGLE_SHEET_ID=
-GOOGLE_SERVICE_ACCOUNT_JSON=   # (if using service account) OR use Apps Script WebApp endpoint
-OPENAI_API_KEY=                # optional (for AI classification)
+GOOGLE_SERVICE_ACCOUNT_JSON=  
+OPENAI_API_KEY=                
